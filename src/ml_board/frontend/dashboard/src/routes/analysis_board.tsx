@@ -2,17 +2,12 @@ import "./analysis_board.css";
 
 import React from "react";
 import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend
+    CartesianGrid, Legend, Line, LineChart, Tooltip, XAxis,
+    YAxis
 } from "recharts";
+import { FilterConfigType, ModelEvaluationPayloadType, ModelEvaluationType } from "../app/datatypes";
+import { useAppSelector } from "../app/hooks";
 import type { RootState } from '../app/store';
-import { ModelEvaluationType, ModelEvaluationPayloadType, FilterConfigType } from "../app/datatypes"
-import { useAppSelector } from "../app/hooks"
 
 
 function selectColor(index: number) {
@@ -31,10 +26,11 @@ export const modelEvaluationSelector = (state: RootState) => state.modelsEvaluat
 
     const modelEvaluationPayload: ModelEvaluationPayloadType = s.data.payload
 
-    const epoch = modelEvaluationPayload.epoch
-    const eId = modelEvaluationPayload.experiment_id
-    const lossScores = modelEvaluationPayload.loss_scores
-    const metricScores = modelEvaluationPayload.metric_scores
+    const { epoch, experiment_id: eId, loss_scores: lossScores, metric_scores: metricScores } = modelEvaluationPayload
+    // const epoch = modelEvaluationPayload.epoch
+    // const eId = modelEvaluationPayload.experiment_id
+    // const lossScores = modelEvaluationPayload.loss_scores
+    // const metricScores = modelEvaluationPayload.metric_scores
 
     for (const metricScore of metricScores) {
         const fullMetricName = metricScore.split + "/" + metricScore.metric
@@ -67,20 +63,21 @@ export const sortedModelEvaluationSelector = (state: RootState) => { // sorts th
     const results: any = modelEvaluationSelector(state)
 
     var resultsSorted = Object.keys(results).reduce((tmpResult, scoreKey) => {
-        return { ...tmpResult, [scoreKey]: Object.keys(results[scoreKey]).sort(function(a, b) {return parseInt(a) - parseInt(b);}).reduce((scoreResult: any, epochKey) => {
-            return [...scoreResult, results[scoreKey][epochKey]]
-        }, [])};
+        return {
+            ...tmpResult, [scoreKey]: Object.keys(results[scoreKey]).sort(function (a, b) { return parseInt(a) - parseInt(b); }).reduce((scoreResult: any, epochKey) => {
+                return [...scoreResult, results[scoreKey][epochKey]]
+            }, [])
+        };
     }, {})
 
     return resultsSorted;
 }
 
-export const filteredModelEvaluationSelector = (state: RootState, metricFilterRegex: string) => {
+export const filteredModelEvaluationSelector = (state: RootState) => {
     // results: {experiment_id_1: [0.9, 0.3, ...]}
     const results: any = sortedModelEvaluationSelector(state);
-
-    var regex = new RegExp(metricFilterRegex);
-    var filteredResults = Object.keys(results).filter(scoreKey => regex.test(scoreKey)).reduce((obj: any, key) => {
+    const re = new RegExp(state.RegEx.value)
+    var filteredResults = Object.keys(results).filter(scoreKey => re.test(scoreKey)).reduce((obj: any, key) => {
         return { ...obj, [key]: results[key] }
     }, {})
     return filteredResults;
@@ -99,9 +96,10 @@ type EvaluationChartLinePropsType = {
 
 const EvaluationChart: React.FC<EvaluationLineChartPropsType> = ({ scoreKey, scoreResult, experimentIds }) => {
 
-    const lines = experimentIds.map((eID, index) => <Line
+    const lines = experimentIds.map((eID: string, index: number) => <Line
         dataKey={eID}
         stroke={selectColor(index)}
+        key={"line#" + index}
     />)
 
     return (
@@ -128,17 +126,15 @@ const EvaluationChart: React.FC<EvaluationLineChartPropsType> = ({ scoreKey, sco
 
 const AnalysisBoard: React.FC<AnalysisBoardProps> = ({ filterConfig }) => {
 
-    // const metricFilters = ["train/F1_SCORE_macro", "val/F1_SCORE_macro", "test/F1_SCORE_macro",
-    //     "train/PRECISION_macro", "val/PRECISION_macro", "test/PRECISION_macro",
-    //     "train/RECALL_macro", "val/RECALL_macro", "test/RECALL_macro"]
-
-    // const experimentIds = ["0", "1"]
-
-    const scoreResults = useAppSelector((state: RootState) => filteredModelEvaluationSelector(state, filterConfig.metricFilterRegex))
+    const scoreResults = useAppSelector((state: RootState) => filteredModelEvaluationSelector(state))
     const scoreKeys: any = Object.keys(scoreResults)
     const experimentIds = Object.keys(scoreResults[scoreKeys[0]][0]).filter(function (item) { return item !== "name" })
 
-    const charts = scoreKeys.map((scoreKey: any) => <div className="diagram-cell"><EvaluationChart key={scoreKey} scoreKey={scoreKey} scoreResult={scoreResults[scoreKey]} experimentIds={experimentIds} /></div>)
+    const charts = scoreKeys.map((scoreKey: any) =>
+        <div className="diagram-cell">
+            <EvaluationChart key={scoreKey} scoreKey={scoreKey} scoreResult={scoreResults[scoreKey]} experimentIds={experimentIds} />
+            </div>)
+
 
     return (
         <>
