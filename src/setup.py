@@ -31,7 +31,12 @@ setup(
         "Flask-SocketIO",
         "eventlet",
         "python-socketio[client]",
-        "gunicorn"
+        "gunicorn",
+        "flask-socketio",
+        "datasets",
+        "transformers",
+        "accelerate",
+        "fs"
     ],
     python_requires=">=3.7",
     include_package_data=True,

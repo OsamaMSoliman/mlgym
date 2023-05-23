@@ -67,11 +67,6 @@ class ClassRegistryItemInstantiationError(Exception):
     pass
 
 
-class SingletonAlreadyInstantiatedError(Exception):
-    """Exception raised when trying to get another instance from a singleton class"""
-    pass
-
-
 class InjectMappingNotFoundError(Exception):
     """Exception raised when Injector cannot inject given placehold when it was not defined in the mapping."""
     pass
@@ -88,6 +83,11 @@ class InvalidTensorFormatError(Exception):
 
 class OptimizerNotInitializedError(Exception):
     """Raised when we want to run an operation on an optimizer, which was not instantiated, yet."""
+    pass
+
+
+class LRSchedulerNotInitializedError(Exception):
+    """Raised when we want to run an operation on a lr scheduler, which was not instantiated, yet."""
     pass
 
 
@@ -123,4 +123,18 @@ class InvalidPathError(Exception):
 
 class CheckpointEntityError(Exception):
     """Raised when there is an error within the checkpoint entity."""
+    pass
+
+
+class EarlyStoppingCriterionFulfilledError(Exception):
+    """Raised when the early stopping criterion in the gym job was fulfilled."""
+    pass
+
+
+class GymError(Exception):
+    """Raised when an error occurs within the gym or during gym instantiation."""
+    pass
+
+class SystemInfoFetchError(Exception):
+    """Raised when an error occurs during fetching system information."""
     pass
